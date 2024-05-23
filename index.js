@@ -53,6 +53,9 @@ const tx = await datatoken.startOrder(
     consumer.address,
     0,
     providerFees,
+    null,
+    null,
+    ethers.BigNumber.from(100000)
 );
 
 const orderTx = await tx.wait();

@@ -11,6 +11,6 @@
   "license": "ISC",
   "dependencies": {
     "@oceanprotocol/lib": "echo-social/ocean.js#feature/taraxa_testnet",
-    "ethers": "^6.12.1"
+    "ethers": "^5.7.2"
   }
 }

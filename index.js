@@ -127,7 +127,7 @@ const tx = await datatoken.startOrder(
     providerFees,
     null,
     null,
-    ethers.BigNumber.from(1000000)
+    ethers.BigNumber.from(10000000)
 );
 
 const orderTx = await tx.wait();

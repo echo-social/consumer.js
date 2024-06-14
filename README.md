@@ -51,5 +51,5 @@ The folder structure of this app is explained below:
 | ------------------------ | --------------------------------------------------------------------------------------------- |
 | **node_modules**         | Contains all  npm dependencies                                                            |
 | **src**/index.js         | Entry point                                                           |
-| **src**/address.json         | Taraxa testnet and mainet oceanprotocol contracts addresses  |
+| address.json         | Taraxa testnet and mainet oceanprotocol contracts addresses  |
 | package.json             | Contains npm dependencies

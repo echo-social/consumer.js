@@ -2,11 +2,11 @@ import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 const oceanlib = require("@oceanprotocol/lib")
 const ethers = require("ethers");
-const axios = require('axios');
+// const axios = require('axios');
 
 const NETWORK_RPC = process.env.NETWORK_RPC;
 const AQUARIUS_URL = process.env.AQUARIUS_URL;
-const SUBGRAPH_URL = process.env.SUBGRAPH_URL;
+// const SUBGRAPH_URL = process.env.SUBGRAPH_URL;
 const DID = process.env.DID;
 const WALLET_PRIVATE_KEY = process.env.WALLET_PRIVATE_KEY;
 
@@ -23,86 +23,86 @@ const asset = await aquarius.resolve(DID);
 const datatokenAddress = asset.datatokens[0].address;
 console.info({ 'asset': asset });
 
-/* Approve the token first */
-await oceanlib.approve(
-  consumer,
-  oceanConfig,
-  consumer.address,
-  oceanConfig.oceanTokenAddress,
-  oceanConfig.fixedRateExchangeAddress,
-  "10000"
-);
+// /* Approve the token first */
+// await oceanlib.approve(
+//   consumer,
+//   oceanConfig,
+//   consumer.address,
+//   oceanConfig.oceanTokenAddress,
+//   oceanConfig.fixedRateExchangeAddress,
+//   "10000"
+// );
 
-/* Find the exchange id in order to swap base token to dataset token */
-/* TODO: use server filter */
+// /* Find the exchange id in order to swap base token to dataset token */
+// /* TODO: use server filter */
 
-const queryFixedRateExchanges = `{
-  fixedRateExchanges(subgraphError:deny){
-    id
-    contract
-    exchangeId
-    owner{id}
-    datatoken{
-      id
-      name
-      symbol
-    }
-    price
-    datatokenBalance
-    active
-    totalSwapValue
-    swaps(skip:0, first:1){
-      tx
-      by {
-        id
-      }
-      baseTokenAmount
-      dataTokenAmount
-      createdTimestamp
-    }
-    updates(skip:0, first:1){
-      oldPrice
-      newPrice
-      newActive
-      createdTimestamp
-      tx
-    }
-  }
-}`
+// const queryFixedRateExchanges = `{
+//   fixedRateExchanges(subgraphError:deny){
+//     id
+//     contract
+//     exchangeId
+//     owner{id}
+//     datatoken{
+//       id
+//       name
+//       symbol
+//     }
+//     price
+//     datatokenBalance
+//     active
+//     totalSwapValue
+//     swaps(skip:0, first:1){
+//       tx
+//       by {
+//         id
+//       }
+//       baseTokenAmount
+//       dataTokenAmount
+//       createdTimestamp
+//     }
+//     updates(skip:0, first:1){
+//       oldPrice
+//       newPrice
+//       newActive
+//       createdTimestamp
+//       tx
+//     }
+//   }
+// }`
 
-const axiosConfig = {
-  method: 'post',
-  url: SUBGRAPH_URL,
-  headers: { "Content-Type": "application/json" },
-  data: JSON.stringify({ "query": queryFixedRateExchanges })
-};
+// const axiosConfig = {
+//   method: 'post',
+//   url: SUBGRAPH_URL,
+//   headers: { "Content-Type": "application/json" },
+//   data: JSON.stringify({ "query": queryFixedRateExchanges })
+// };
 
-const axiosResponse = await axios(axiosConfig);
-let fixedRateExchangeInfo = axiosResponse.data.data.fixedRateExchanges.find(
-  function (el) {
-    return el.datatoken.id.toLowerCase() == datatokenAddress.toLowerCase();
-  });
-const exchangeId = fixedRateExchangeInfo.exchangeId
-console.info({ 'exchangeId': exchangeId });
+// const axiosResponse = await axios(axiosConfig);
+// let fixedRateExchangeInfo = axiosResponse.data.data.fixedRateExchanges.find(
+//   function (el) {
+//     return el.datatoken.id.toLowerCase() == datatokenAddress.toLowerCase();
+//   });
+// const exchangeId = fixedRateExchangeInfo.exchangeId
+// console.info({ 'exchangeId': exchangeId });
 
-/* Swap base token for DT token */
-const fixedRate = new oceanlib.FixedRateExchange(oceanConfig.fixedRateExchangeAddress, consumer);
-const maxBasedTokens = '150';
-await fixedRate.buyDatatokens(exchangeId, '1', maxBasedTokens)
+// /* Swap base token for DT token */
+// const fixedRate = new oceanlib.FixedRateExchange(oceanConfig.fixedRateExchangeAddress, consumer);
+// const maxBasedTokens = '150';
+// await fixedRate.buyDatatokens(exchangeId, '1', maxBasedTokens)
 
-/* Check the balances */
-var consumerOCEANBalance = await oceanlib.balance(
-  consumer,
-  oceanConfig.oceanTokenAddress,
-  await consumer.getAddress()
-)
-console.info(`Consumer base token balance after swap: ${consumerOCEANBalance}`)
+// /* Check the balances */
+// var consumerOCEANBalance = await oceanlib.balance(
+//   consumer,
+//   oceanConfig.oceanTokenAddress,
+//   await consumer.getAddress()
+// )
+// console.info(`Consumer base token balance after swap: ${consumerOCEANBalance}`)
 var consumerDTBalance = await oceanlib.balance(
   consumer,
   datatokenAddress,
   await consumer.getAddress()
 )
-console.info(`Consumer DT token balance after swap: ${consumerDTBalance}`)
+console.info(`DT token balance: ${consumerDTBalance}`)
 
 /* Configure fees */
 const initializeData = await oceanlib.ProviderInstance.initialize(
@@ -137,6 +137,7 @@ const tx = await datatoken.startOrder(
 );
 const orderTx = await tx.wait();
 const orderStartedTx = oceanlib.getEventFromTx(orderTx, "OrderStarted");
+console.info({ 'orderTx.transactionHash': orderTx.transactionHash });
 
 /* Get the download URL */
 const downloadURL = await oceanlib.ProviderInstance.getDownloadUrl(
@@ -148,3 +149,33 @@ const downloadURL = await oceanlib.ProviderInstance.getDownloadUrl(
   consumer
 );
 console.info({ 'downloadURL': downloadURL });
+
+/* Download the file */
+const http = require('https');
+const fs = require('fs');
+
+var file = fs.createWriteStream(DID);
+
+var request = http.get(downloadURL, (response) => {
+  if (response.statusCode === 200) {
+    response.pipe(file);
+  } else {
+    console.error({ 'statusCode': response.statusCode, 'statusMessage': response.statusMessage });
+    file.close();
+    fs.unlink(dest, () => { });
+  }
+
+})
+
+file.on('finish', () => file.close());
+
+file.on("error", (err) => {
+  console.error(err);
+  file.close();
+  fs.unlink(dest, () => { });
+});
+
+request.on('error', (err) => {
+  console.error(err);
+  fs.unlink(dest);
+});
